@@ -24,7 +24,7 @@ const updateTaskSchema = z.object({
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -36,7 +36,7 @@ export async function PUT(
       );
     }
     
-    const { taskId } = params;
+    const { taskId } = await params;
     
     const task = await prisma.task.findUnique({
       where: { id: taskId },
@@ -135,7 +135,7 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -147,7 +147,7 @@ export async function DELETE(
       );
     }
     
-    const { taskId } = params;
+    const { taskId } = await params;
     
     const task = await prisma.task.findUnique({
       where: { id: taskId },

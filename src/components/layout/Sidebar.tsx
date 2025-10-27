@@ -28,6 +28,7 @@ import {
   ExpandLess,
   ExpandMore,
   ViewKanban,
+  Mail,
 } from '@mui/icons-material';
 import { TeamWithMembers } from '@/types';
 
@@ -96,6 +97,23 @@ export default function Sidebar({ onClose }: SidebarProps) {
           Create Team
         </Button>
       </Box>
+
+      <Divider />
+
+      {/* Invitations Link */}
+      <List>
+        <ListItem disablePadding>
+          <ListItemButton
+            onClick={() => handleNavigation('/invitations')}
+            selected={pathname === '/invitations'}
+          >
+            <ListItemIcon>
+              <Mail />
+            </ListItemIcon>
+            <ListItemText primary="Invitations" />
+          </ListItemButton>
+        </ListItem>
+      </List>
 
       <Divider />
 

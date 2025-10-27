@@ -13,7 +13,7 @@ import { getCurrentUser, isTeamMember } from '@/lib/utils';
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -25,7 +25,7 @@ export async function GET(
       );
     }
     
-    const { teamId } = params;
+    const { teamId } = await params;
     
     // Check if user is a member of the team
     const isMember = await isTeamMember(user.id, teamId);

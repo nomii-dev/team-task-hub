@@ -23,7 +23,7 @@ const createTaskSchema = z.object({
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { boardId: string } }
+  { params }: { params: Promise<{ boardId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -35,7 +35,7 @@ export async function POST(
       );
     }
     
-    const { boardId } = params;
+    const { boardId } = await params;
     
     // Check if user has access to this board
     const hasAccess = await canAccessBoard(user.id, boardId);

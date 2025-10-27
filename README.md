@@ -102,6 +102,8 @@ team-task-hub/
    ```bash
    npm install
    ```
+   
+   > **Note**: The project uses React 19. If you see any peer dependency warnings, they can be safely ignored. See [INSTALLATION_NOTES.md](INSTALLATION_NOTES.md) for details.
 
 3. **Set up environment variables**
    

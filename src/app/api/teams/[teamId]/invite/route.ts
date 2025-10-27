@@ -1,13 +1,14 @@
 /**
  * Team Invite API Route
  * Handles inviting users to a team (admin only)
+ * Creates an invitation that the user must accept
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { getCurrentUser, isTeamAdmin } from '@/lib/utils';
-import { Role } from '@prisma/client';
+import { Role, NotificationType } from '@prisma/client';
 
 const inviteSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -20,7 +21,7 @@ const inviteSchema = z.object({
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -32,7 +33,7 @@ export async function POST(
       );
     }
     
-    const { teamId } = params;
+    const { teamId } = await params;
     
     // Check if user is an admin of the team
     const isAdmin = await isTeamAdmin(user.id, teamId);
@@ -76,30 +77,93 @@ export async function POST(
       );
     }
     
-    // Add user to team
-    const teamMember = await prisma.teamMember.create({
-      data: {
-        userId: invitedUser.id,
-        teamId,
-        role: validatedData.role as Role,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
+    // Check if there's already a pending invitation
+    const existingInvitation = await prisma.teamInvitation.findUnique({
+      where: {
+        teamId_invitedUser: {
+          teamId,
+          invitedUser: invitedUser.id,
         },
       },
+    });
+    
+    if (existingInvitation && existingInvitation.status === 'PENDING') {
+      return NextResponse.json(
+        { error: 'User already has a pending invitation to this team' },
+        { status: 400 }
+      );
+    }
+    
+    // Get team details for the notification
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { name: true },
+    });
+    
+    // Create invitation and notification in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create or update the invitation
+      const invitation = await tx.teamInvitation.upsert({
+        where: {
+          teamId_invitedUser: {
+            teamId,
+            invitedUser: invitedUser.id,
+          },
+        },
+        create: {
+          teamId,
+          invitedBy: user.id,
+          invitedUser: invitedUser.id,
+          role: validatedData.role as Role,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        },
+        update: {
+          status: 'PENDING',
+          role: validatedData.role as Role,
+          invitedBy: user.id,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          respondedAt: null,
+        },
+        include: {
+          team: {
+            select: {
+              name: true,
+            },
+          },
+          inviter: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
+      
+      // Create notification for the invited user
+      await tx.notification.create({
+        data: {
+          userId: invitedUser.id,
+          type: NotificationType.TEAM_INVITATION,
+          title: 'Team Invitation',
+          message: `${user.name || user.email} invited you to join "${team?.name}"`,
+          data: {
+            invitationId: invitation.id,
+            teamId,
+            teamName: team?.name,
+            inviterName: user.name || user.email,
+            role: validatedData.role,
+          },
+        },
+      });
+      
+      return invitation;
     });
     
     return NextResponse.json(
       {
         success: true,
-        message: 'User invited successfully',
-        data: teamMember,
+        message: 'Invitation sent successfully',
+        data: result,
       },
       { status: 201 }
     );

@@ -18,7 +18,7 @@ const createBoardSchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -30,7 +30,7 @@ export async function GET(
       );
     }
     
-    const { teamId } = params;
+    const { teamId } = await params;
     
     // Check if user is a member of the team
     const isMember = await isTeamMember(user.id, teamId);
@@ -75,7 +75,7 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { teamId: string } }
+  { params }: { params: Promise<{ teamId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -87,7 +87,7 @@ export async function POST(
       );
     }
     
-    const { teamId } = params;
+    const { teamId } = await params;
     
     // Check if user is an admin of the team
     const isAdmin = await isTeamAdmin(user.id, teamId);

@@ -18,7 +18,7 @@ const updateBoardSchema = z.object({
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { boardId: string } }
+  { params }: { params: Promise<{ boardId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -30,7 +30,7 @@ export async function GET(
       );
     }
     
-    const { boardId } = params;
+    const { boardId } = await params;
     
     // Check if user has access to this board
     const hasAccess = await canAccessBoard(user.id, boardId);
@@ -113,7 +113,7 @@ export async function GET(
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { boardId: string } }
+  { params }: { params: Promise<{ boardId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -125,7 +125,7 @@ export async function PUT(
       );
     }
     
-    const { boardId } = params;
+    const { boardId } = await params;
     
     const board = await prisma.board.findUnique({
       where: { id: boardId },
@@ -186,7 +186,7 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { boardId: string } }
+  { params }: { params: Promise<{ boardId: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -198,7 +198,7 @@ export async function DELETE(
       );
     }
     
-    const { boardId } = params;
+    const { boardId } = await params;
     
     const board = await prisma.board.findUnique({
       where: { id: boardId },

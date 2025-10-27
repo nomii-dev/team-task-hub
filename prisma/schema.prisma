@@ -20,11 +20,14 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  accounts      Account[]
-  sessions      Session[]
-  teamMembers   TeamMember[]
-  assignedTasks Task[]       @relation("TaskAssignee")
-  createdTasks  Task[]       @relation("TaskCreator")
+  accounts           Account[]
+  sessions           Session[]
+  teamMembers        TeamMember[]
+  assignedTasks      Task[]            @relation("TaskAssignee")
+  createdTasks       Task[]            @relation("TaskCreator")
+  sentInvitations    TeamInvitation[]  @relation("InvitationSender")
+  receivedInvitations TeamInvitation[] @relation("InvitationReceiver")
+  notifications      Notification[]
 
   @@map("users")
 }
@@ -69,8 +72,9 @@ model Team {
   updatedAt DateTime @updatedAt
 
   // Relations
-  members TeamMember[]
-  boards  Board[]
+  members     TeamMember[]
+  boards      Board[]
+  invitations TeamInvitation[]
 
   @@map("teams")
 }
@@ -139,6 +143,61 @@ enum Status {
   TODO
   IN_PROGRESS
   DONE
+}
+
+// TeamInvitation model - represents pending team invitations
+model TeamInvitation {
+  id         String            @id @default(cuid())
+  teamId     String
+  invitedBy  String
+  invitedUser String
+  role       Role              @default(MEMBER)
+  status     InvitationStatus  @default(PENDING)
+  createdAt  DateTime          @default(now())
+  expiresAt  DateTime?
+  respondedAt DateTime?
+
+  // Relations
+  team       Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  inviter    User @relation("InvitationSender", fields: [invitedBy], references: [id], onDelete: Cascade)
+  invitee    User @relation("InvitationReceiver", fields: [invitedUser], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, invitedUser])
+  @@map("team_invitations")
+}
+
+// InvitationStatus enum
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+// Notification model - for user notifications
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  read      Boolean          @default(false)
+  data      Json?            // Additional data (e.g., invitationId, teamId)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// NotificationType enum
+enum NotificationType {
+  TEAM_INVITATION
+  TASK_ASSIGNED
+  TASK_UPDATED
+  TEAM_UPDATE
+  GENERAL
 }
 
 // Verification Token for NextAuth

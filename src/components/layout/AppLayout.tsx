@@ -30,6 +30,7 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '../providers/ThemeProvider';
 import Sidebar from './Sidebar';
+import NotificationBell from '../notifications/NotificationBell';
 import { getInitials, stringToColor } from '@/lib/utils';
 
 const DRAWER_WIDTH = 280;
@@ -101,6 +102,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <IconButton color="inherit" onClick={toggleTheme} sx={{ mr: 1 }}>
             {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
           </IconButton>
+
+          {/* Notifications */}
+          <NotificationBell />
 
           {/* User Menu */}
           <IconButton
