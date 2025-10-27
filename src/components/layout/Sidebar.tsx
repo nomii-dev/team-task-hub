@@ -32,6 +32,13 @@ import {
 } from '@mui/icons-material';
 import { TeamWithMembers } from '@/types';
 
+interface TeamWithBoards extends TeamWithMembers {
+  boards?: Array<{
+    id: string;
+    name: string;
+  }>;
+}
+
 interface SidebarProps {
   onClose?: () => void;
 }
@@ -39,7 +46,7 @@ interface SidebarProps {
 export default function Sidebar({ onClose }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [teams, setTeams] = useState<TeamWithMembers[]>([]);
+  const [teams, setTeams] = useState<TeamWithBoards[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
 
@@ -53,10 +60,27 @@ export default function Sidebar({ onClose }: SidebarProps) {
       const data = await response.json();
       
       if (data.success) {
-        setTeams(data.data);
+        // Fetch boards for each team
+        const teamsWithBoards = await Promise.all(
+          data.data.map(async (team: TeamWithMembers) => {
+            try {
+              const boardsResponse = await fetch(`/api/teams/${team.id}/boards`);
+              const boardsData = await boardsResponse.json();
+              return {
+                ...team,
+                boards: boardsData.success ? boardsData.data : [],
+              };
+            } catch (error) {
+              console.error(`Failed to fetch boards for team ${team.id}:`, error);
+              return { ...team, boards: [] };
+            }
+          })
+        );
+        
+        setTeams(teamsWithBoards);
         // Auto-expand first team
-        if (data.data.length > 0) {
-          setExpandedTeams(new Set([data.data[0].id]));
+        if (teamsWithBoards.length > 0) {
+          setExpandedTeams(new Set([teamsWithBoards[0].id]));
         }
       }
     } catch (error) {
@@ -160,7 +184,34 @@ export default function Sidebar({ onClose }: SidebarProps) {
                       <ListItemText primary="Dashboard" />
                     </ListItemButton>
                     
-                    {/* This would be populated with actual boards */}
+                    {/* Display actual boards */}
+                    {team.boards && team.boards.length > 0 && (
+                      <>
+                        <ListItem sx={{ pl: 4, py: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            Boards
+                          </Typography>
+                        </ListItem>
+                        {team.boards.map((board) => (
+                          <ListItemButton
+                            key={board.id}
+                            sx={{ pl: 6 }}
+                            onClick={() => handleNavigation(`/teams/${team.id}/boards/${board.id}`)}
+                            selected={pathname.includes(board.id)}
+                          >
+                            <ListItemIcon>
+                              <ViewKanban fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText 
+                              primary={board.name}
+                              primaryTypographyProps={{ variant: 'body2' }}
+                            />
+                          </ListItemButton>
+                        ))}
+                      </>
+                    )}
+                    
+                    {/* Create new board button */}
                     <ListItemButton
                       sx={{ pl: 4 }}
                       onClick={() => handleNavigation(`/teams/${team.id}/boards/new`)}
