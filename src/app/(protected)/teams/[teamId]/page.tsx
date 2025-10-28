@@ -3,11 +3,11 @@
  * Shows team overview with boards and member management
  */
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Box,
   Typography,
@@ -24,10 +24,10 @@ import {
   CircularProgress,
   Tabs,
   Tab,
-} from '@mui/material';
-import { Add, ViewKanban } from '@mui/icons-material';
-import { TeamWithMembers } from '@/types';
-import MemberManagement from '@/components/team/MemberManagement';
+} from "@mui/material";
+import { Add, ViewKanban } from "@mui/icons-material";
+import { TeamWithMembers } from "@/types";
+import MemberManagement from "@/components/team/MemberManagement";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -56,12 +56,12 @@ export default function TeamDashboardPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const teamId = params.teamId as string;
-  
+
   const [team, setTeam] = useState<TeamWithMembers | null>(null);
   const [boards, setBoards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createBoardOpen, setCreateBoardOpen] = useState(false);
-  const [boardName, setBoardName] = useState('');
+  const [boardName, setBoardName] = useState("");
   const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export default function TeamDashboardPage() {
       if (teamData.success) setTeam(teamData.data);
       if (boardsData.success) setBoards(boardsData.data);
     } catch (error) {
-      console.error('Failed to fetch team data:', error);
+      console.error("Failed to fetch team data:", error);
     } finally {
       setLoading(false);
     }
@@ -90,18 +90,18 @@ export default function TeamDashboardPage() {
   const handleCreateBoard = async () => {
     try {
       const response = await fetch(`/api/teams/${teamId}/boards`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: boardName }),
       });
 
       if (response.ok) {
-        setBoardName('');
+        setBoardName("");
         setCreateBoardOpen(false);
         fetchTeamData();
       }
     } catch (error) {
-      console.error('Failed to create board:', error);
+      console.error("Failed to create board:", error);
     }
   };
 
@@ -111,7 +111,7 @@ export default function TeamDashboardPage() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
         <CircularProgress />
       </Box>
     );
@@ -125,13 +125,22 @@ export default function TeamDashboardPage() {
     );
   }
 
-  const currentMember = team.members.find((m) => m.user.email === session?.user?.email);
-  const isAdmin = currentMember?.role === 'ADMIN';
+  const currentMember = team.members.find(
+    (m) => m.user.email === session?.user?.email
+  );
+  const isAdmin = currentMember?.role === "ADMIN";
 
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mb: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <Box>
           <Typography variant="h4" gutterBottom>
             {team.name}
@@ -152,7 +161,7 @@ export default function TeamDashboardPage() {
       </Box>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={tabValue} onChange={handleTabChange}>
           <Tab label="Boards" />
           <Tab label="Members" />
@@ -163,12 +172,16 @@ export default function TeamDashboardPage() {
       <TabPanel value={tabValue} index={0}>
         <Grid container spacing={2}>
           {boards.map((board) => (
-            <Grid item xs={12} sm={6} md={4} key={board.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={board.id}>
               <Card>
-                <CardActionArea onClick={() => router.push(`/teams/${teamId}/boards/${board.id}`)}>
+                <CardActionArea
+                  onClick={() =>
+                    router.push(`/teams/${teamId}/boards/${board.id}`)
+                  }
+                >
                   <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <ViewKanban sx={{ mr: 1, color: 'primary.main' }} />
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                      <ViewKanban sx={{ mr: 1, color: "primary.main" }} />
                       <Typography variant="h6">{board.name}</Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary">
@@ -180,8 +193,8 @@ export default function TeamDashboardPage() {
             </Grid>
           ))}
           {boards.length === 0 && (
-            <Grid item xs={12}>
-              <Card sx={{ p: 3, textAlign: 'center' }}>
+            <Grid size={{ xs: 12 }}>
+              <Card sx={{ p: 3, textAlign: "center" }}>
                 <Typography color="text.secondary">
                   No boards yet. Create one to get started!
                 </Typography>
@@ -195,7 +208,7 @@ export default function TeamDashboardPage() {
       <TabPanel value={tabValue} index={1}>
         <MemberManagement
           teamId={teamId}
-          currentUserId={currentMember?.userId || ''}
+          currentUserId={currentMember?.userId || ""}
           isAdmin={isAdmin}
         />
       </TabPanel>
