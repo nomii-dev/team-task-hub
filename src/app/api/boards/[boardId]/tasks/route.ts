@@ -3,16 +3,16 @@
  * Handles creating tasks on a board
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import prisma from '@/lib/prisma';
-import { getCurrentUser, canAccessBoard } from '@/lib/utils';
-import { Status } from '@prisma/client';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import prisma from "@/lib/prisma";
+import { getCurrentUser, canAccessBoard } from "@/lib/utils";
+import { Status } from "@prisma/client";
 
 const createTaskSchema = z.object({
-  title: z.string().min(1, 'Task title is required'),
+  title: z.string().min(1, "Task title is required"),
   description: z.string().optional(),
-  status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).default('TODO'),
+  status: z.enum(["TODO", "IN_PROGRESS", "DONE"]).default("TODO"),
   assigneeId: z.string().optional(),
   dueDate: z.string().optional(),
 });
@@ -27,29 +27,26 @@ export async function POST(
 ) {
   try {
     const user = await getCurrentUser();
-    
+
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const { boardId } = await params;
-    
+
     // Check if user has access to this board
     const hasAccess = await canAccessBoard(user.id, boardId);
-    
+
     if (!hasAccess) {
       return NextResponse.json(
-        { error: 'Forbidden: You do not have access to this board' },
+        { error: "Forbidden: You do not have access to this board" },
         { status: 403 }
       );
     }
-    
+
     const body = await req.json();
     const validatedData = createTaskSchema.parse(body);
-    
+
     // Get the highest position for the status column
     const lastTask = await prisma.task.findFirst({
       where: {
@@ -57,12 +54,12 @@ export async function POST(
         status: validatedData.status as Status,
       },
       orderBy: {
-        position: 'desc',
+        position: "desc",
       },
     });
-    
+
     const position = lastTask ? lastTask.position + 1 : 0;
-    
+
     const task = await prisma.task.create({
       data: {
         title: validatedData.title,
@@ -92,11 +89,11 @@ export async function POST(
         },
       },
     });
-    
+
     return NextResponse.json(
       {
         success: true,
-        message: 'Task created successfully',
+        message: "Task created successfully",
         data: task,
       },
       { status: 201 }
@@ -104,14 +101,14 @@ export async function POST(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.issues[0].message },
         { status: 400 }
       );
     }
-    
-    console.error('Create task error:', error);
+
+    console.error("Create task error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

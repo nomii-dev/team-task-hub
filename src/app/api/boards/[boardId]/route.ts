@@ -3,13 +3,13 @@
  * Handles getting, updating, and deleting boards
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import prisma from '@/lib/prisma';
-import { getCurrentUser, canAccessBoard, isTeamAdmin } from '@/lib/utils';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import prisma from "@/lib/prisma";
+import { getCurrentUser, canAccessBoard, isTeamAdmin } from "@/lib/utils";
 
 const updateBoardSchema = z.object({
-  name: z.string().min(2, 'Board name must be at least 2 characters'),
+  name: z.string().min(2, "Board name must be at least 2 characters"),
 });
 
 /**
@@ -22,26 +22,23 @@ export async function GET(
 ) {
   try {
     const user = await getCurrentUser();
-    
+
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const { boardId } = await params;
-    
+
     // Check if user has access to this board
     const hasAccess = await canAccessBoard(user.id, boardId);
-    
+
     if (!hasAccess) {
       return NextResponse.json(
-        { error: 'Forbidden: You do not have access to this board' },
+        { error: "Forbidden: You do not have access to this board" },
         { status: 403 }
       );
     }
-    
+
     const board = await prisma.board.findUnique({
       where: { id: boardId },
       include: {
@@ -79,29 +76,23 @@ export async function GET(
               },
             },
           },
-          orderBy: [
-            { status: 'asc' },
-            { position: 'asc' },
-          ],
+          orderBy: [{ status: "asc" }, { position: "asc" }],
         },
       },
     });
-    
+
     if (!board) {
-      return NextResponse.json(
-        { error: 'Board not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json({
       success: true,
       data: board,
     });
   } catch (error) {
-    console.error('Get board error:', error);
+    console.error("Get board error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -117,64 +108,58 @@ export async function PUT(
 ) {
   try {
     const user = await getCurrentUser();
-    
+
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const { boardId } = await params;
-    
+
     const board = await prisma.board.findUnique({
       where: { id: boardId },
       select: { teamId: true },
     });
-    
+
     if (!board) {
-      return NextResponse.json(
-        { error: 'Board not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
-    
+
     // Check if user is an admin of the team
     const isAdmin = await isTeamAdmin(user.id, board.teamId);
-    
+
     if (!isAdmin) {
       return NextResponse.json(
-        { error: 'Forbidden: Only team admins can update boards' },
+        { error: "Forbidden: Only team admins can update boards" },
         { status: 403 }
       );
     }
-    
+
     const body = await req.json();
     const validatedData = updateBoardSchema.parse(body);
-    
+
     const updatedBoard = await prisma.board.update({
       where: { id: boardId },
       data: {
         name: validatedData.name,
       },
     });
-    
+
     return NextResponse.json({
       success: true,
-      message: 'Board updated successfully',
+      message: "Board updated successfully",
       data: updatedBoard,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.issues[0].message },
         { status: 400 }
       );
     }
-    
-    console.error('Update board error:', error);
+
+    console.error("Update board error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -190,50 +175,44 @@ export async function DELETE(
 ) {
   try {
     const user = await getCurrentUser();
-    
+
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const { boardId } = await params;
-    
+
     const board = await prisma.board.findUnique({
       where: { id: boardId },
       select: { teamId: true },
     });
-    
+
     if (!board) {
-      return NextResponse.json(
-        { error: 'Board not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
-    
+
     // Check if user is an admin of the team
     const isAdmin = await isTeamAdmin(user.id, board.teamId);
-    
+
     if (!isAdmin) {
       return NextResponse.json(
-        { error: 'Forbidden: Only team admins can delete boards' },
+        { error: "Forbidden: Only team admins can delete boards" },
         { status: 403 }
       );
     }
-    
+
     await prisma.board.delete({
       where: { id: boardId },
     });
-    
+
     return NextResponse.json({
       success: true,
-      message: 'Board deleted successfully',
+      message: "Board deleted successfully",
     });
   } catch (error) {
-    console.error('Delete board error:', error);
+    console.error("Delete board error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
