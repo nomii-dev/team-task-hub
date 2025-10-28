@@ -1,12 +1,13 @@
 /**
  * Team Dashboard Page
- * Shows team overview with boards and members
+ * Shows team overview with boards and member management
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   Box,
   Typography,
@@ -15,35 +16,53 @@ import {
   CardContent,
   CardActionArea,
   Button,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Avatar,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
   CircularProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
-import { Add, ViewKanban, Group } from '@mui/icons-material';
+import { Add, ViewKanban } from '@mui/icons-material';
 import { TeamWithMembers } from '@/types';
-import { getInitials, stringToColor } from '@/lib/utils';
+import MemberManagement from '@/components/team/MemberManagement';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`team-tabpanel-${index}`}
+      aria-labelledby={`team-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 export default function TeamDashboardPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const teamId = params.teamId as string;
   
   const [team, setTeam] = useState<TeamWithMembers | null>(null);
   const [boards, setBoards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [createBoardOpen, setCreateBoardOpen] = useState(false);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [boardName, setBoardName] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
+  const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
     fetchTeamData();
@@ -86,27 +105,8 @@ export default function TeamDashboardPage() {
     }
   };
 
-  const handleInviteMember = async () => {
-    try {
-      const response = await fetch(`/api/teams/${teamId}/invite`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setInviteEmail('');
-        setInviteDialogOpen(false);
-        fetchTeamData();
-        alert('Member invited successfully!');
-      } else {
-        alert(data.error || 'Failed to invite member');
-      }
-    } catch (error) {
-      console.error('Failed to invite member:', error);
-    }
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
   };
 
   if (loading) {
@@ -125,10 +125,12 @@ export default function TeamDashboardPage() {
     );
   }
 
-  const isAdmin = team.members.some((m) => m.role === 'ADMIN');
+  const currentMember = team.members.find((m) => m.user.email === session?.user?.email);
+  const isAdmin = currentMember?.role === 'ADMIN';
 
   return (
     <Box>
+      {/* Header */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="h4" gutterBottom>
@@ -139,91 +141,64 @@ export default function TeamDashboardPage() {
           </Typography>
         </Box>
         {isAdmin && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="outlined"
-              startIcon={<Group />}
-              onClick={() => setInviteDialogOpen(true)}
-            >
-              Invite Member
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setCreateBoardOpen(true)}
-            >
-              Create Board
-            </Button>
-          </Box>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setCreateBoardOpen(true)}
+          >
+            Create Board
+          </Button>
         )}
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Boards Section */}
-        <Grid item xs={12} md={8}>
-          <Typography variant="h6" gutterBottom>
-            Boards
-          </Typography>
-          <Grid container spacing={2}>
-            {boards.map((board) => (
-              <Grid item xs={12} sm={6} key={board.id}>
-                <Card>
-                  <CardActionArea onClick={() => router.push(`/teams/${teamId}/boards/${board.id}`)}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <ViewKanban sx={{ mr: 1, color: 'primary.main' }} />
-                        <Typography variant="h6">{board.name}</Typography>
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        {board._count?.tasks || 0} tasks
-                      </Typography>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            ))}
-            {boards.length === 0 && (
-              <Grid item xs={12}>
-                <Card sx={{ p: 3, textAlign: 'center' }}>
-                  <Typography color="text.secondary">
-                    No boards yet. Create one to get started!
-                  </Typography>
-                </Card>
-              </Grid>
-            )}
-          </Grid>
-        </Grid>
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={tabValue} onChange={handleTabChange}>
+          <Tab label="Boards" />
+          <Tab label="Members" />
+        </Tabs>
+      </Box>
 
-        {/* Members Section */}
-        <Grid item xs={12} md={4}>
-          <Typography variant="h6" gutterBottom>
-            Team Members
-          </Typography>
-          <Card>
-            <List>
-              {team.members.map((member) => (
-                <ListItem key={member.id}>
-                  <ListItemAvatar>
-                    <Avatar
-                      src={member.user.image || undefined}
-                      sx={{ bgcolor: stringToColor(member.user.name || member.user.email) }}
-                    >
-                      {getInitials(member.user.name)}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={member.user.name || member.user.email}
-                    secondary={member.user.email}
-                  />
-                  {member.role === 'ADMIN' && (
-                    <Chip label="Admin" size="small" color="primary" />
-                  )}
-                </ListItem>
-              ))}
-            </List>
-          </Card>
+      {/* Boards Tab */}
+      <TabPanel value={tabValue} index={0}>
+        <Grid container spacing={2}>
+          {boards.map((board) => (
+            <Grid item xs={12} sm={6} md={4} key={board.id}>
+              <Card>
+                <CardActionArea onClick={() => router.push(`/teams/${teamId}/boards/${board.id}`)}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <ViewKanban sx={{ mr: 1, color: 'primary.main' }} />
+                      <Typography variant="h6">{board.name}</Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {board._count?.tasks || 0} tasks
+                    </Typography>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          ))}
+          {boards.length === 0 && (
+            <Grid item xs={12}>
+              <Card sx={{ p: 3, textAlign: 'center' }}>
+                <Typography color="text.secondary">
+                  No boards yet. Create one to get started!
+                </Typography>
+              </Card>
+            </Grid>
+          )}
         </Grid>
-      </Grid>
+      </TabPanel>
+
+      {/* Members Tab */}
+      <TabPanel value={tabValue} index={1}>
+        <MemberManagement
+          teamId={teamId}
+          currentUserId={currentMember?.userId || ''}
+          isAdmin={isAdmin}
+        />
+      </TabPanel>
 
       {/* Create Board Dialog */}
       <Dialog open={createBoardOpen} onClose={() => setCreateBoardOpen(false)}>
@@ -242,29 +217,6 @@ export default function TeamDashboardPage() {
           <Button onClick={() => setCreateBoardOpen(false)}>Cancel</Button>
           <Button onClick={handleCreateBoard} variant="contained">
             Create
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Invite Member Dialog */}
-      <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)}>
-        <DialogTitle>Invite Team Member</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Email Address"
-            type="email"
-            fullWidth
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            helperText="User must have an account to be invited"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setInviteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleInviteMember} variant="contained">
-            Invite
           </Button>
         </DialogActions>
       </Dialog>

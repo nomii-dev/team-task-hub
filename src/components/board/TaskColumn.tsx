@@ -40,6 +40,7 @@ export default function TaskColumn({
         display: 'flex',
         flexDirection: 'column',
         minHeight: 400,
+        overflow: 'visible',
       }}
     >
       <Box
@@ -61,7 +62,15 @@ export default function TaskColumn({
         </IconButton>
       </Box>
 
-      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+      <Box 
+        sx={{ 
+          flexGrow: 1, 
+          overflowY: 'auto',
+          overflowX: 'visible',
+          px: 0.5,
+          mx: -0.5,
+        }}
+      >
         {tasks.map((task) => (
           <TaskCard
             key={task.id}

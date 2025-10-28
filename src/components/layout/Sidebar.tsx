@@ -57,21 +57,40 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const fetchTeams = async () => {
     try {
       const response = await fetch('/api/teams');
+      
+      if (!response.ok) {
+        console.error('Failed to fetch teams:', response.status);
+        setTeams([]);
+        return;
+      }
+      
       const data = await response.json();
       
-      if (data.success) {
-        // Fetch boards for each team
+      if (data.success && Array.isArray(data.data)) {
+        // Fetch boards for each team (only teams user is a member of)
         const teamsWithBoards = await Promise.all(
           data.data.map(async (team: TeamWithMembers) => {
             try {
               const boardsResponse = await fetch(`/api/teams/${team.id}/boards`);
+              
+              // If user is not a member (403), don't show boards
+              if (boardsResponse.status === 403) {
+                console.warn(`Access denied to boards for team ${team.id}`);
+                return { ...team, boards: [] };
+              }
+              
+              if (!boardsResponse.ok) {
+                console.error(`Failed to fetch boards for team ${team.id}:`, boardsResponse.status);
+                return { ...team, boards: [] };
+              }
+              
               const boardsData = await boardsResponse.json();
               return {
                 ...team,
-                boards: boardsData.success ? boardsData.data : [],
+                boards: boardsData.success && Array.isArray(boardsData.data) ? boardsData.data : [],
               };
             } catch (error) {
-              console.error(`Failed to fetch boards for team ${team.id}:`, error);
+              console.error(`Error fetching boards for team ${team.id}:`, error);
               return { ...team, boards: [] };
             }
           })
@@ -82,9 +101,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
         if (teamsWithBoards.length > 0) {
           setExpandedTeams(new Set([teamsWithBoards[0].id]));
         }
+      } else {
+        console.error('Invalid teams data received:', data);
+        setTeams([]);
       }
     } catch (error) {
       console.error('Failed to fetch teams:', error);
+      setTeams([]);
     } finally {
       setLoading(false);
     }

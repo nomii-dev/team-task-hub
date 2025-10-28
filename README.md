@@ -1,335 +1,295 @@
 # Team Task-Hub
 
-A full-stack productivity application for small teams with task boards, collaboration features, and role-based permissions.
+A productivity app for small teams with task boards and collaboration features.
 
-## 🚀 Features
+## Features
 
-- **User Authentication**: Secure sign-up/sign-in with NextAuth.js (credentials + optional OAuth)
-- **Team Management**: Create teams, invite members, manage roles (Admin/Member)
-- **Task Boards**: Kanban-style boards with customizable columns (To Do, In Progress, Done)
-- **Task Management**: Create, edit, assign, and track tasks with due dates
-- **Role-Based Access**: Admin-only features for team and board management
-- **Responsive UI**: Beautiful Material-UI components with light/dark theme toggle
-- **Real-time Ready**: Architecture supports WebSocket/SSE integration
+### 🔐 Authentication
+- Email/password authentication
+- Secure session management with NextAuth.js
+- User profile management
 
-## 🛠️ Technology Stack
+### 👥 Team Management
+- Create and manage teams
+- **Full Member CRUD Operations:**
+  - **Invite members** via email with role selection
+  - **View all members** with roles and join dates
+  - **Update member roles** (Admin/Member)
+  - **Remove members** from team
+  - Protection against removing last admin
+  - Invitation system with notifications
 
-- **Framework**: Next.js 15.x (App Router)
-- **UI Library**: Material-UI (MUI) 7.3.x
-- **Authentication**: NextAuth.js v4
-- **Database**: PostgreSQL with Prisma ORM
-- **Language**: TypeScript
-- **Styling**: Emotion (CSS-in-JS)
-- **Deployment**: Vercel-ready
+### 📋 Board Management
+- Create multiple boards per team
+- Kanban-style task boards
+- **Delete boards** with confirmation
+- Boards visible in sidebar navigation
 
-## 📁 Project Structure
+### ✅ Task Management
+- Create, update, and delete tasks
+- Drag-and-drop task organization
+- Task status: To Do, In Progress, Done
+- Assign tasks to team members
+- Set due dates
+- Task descriptions
 
-```
-team-task-hub/
-├── src/
-│   ├── app/                      # Next.js App Router pages
-│   │   ├── (auth)/              # Authentication pages
-│   │   │   ├── signin/
-│   │   │   └── signup/
-│   │   ├── (protected)/         # Protected routes
-│   │   │   ├── teams/
-│   │   │   │   └── [teamId]/
-│   │   │   │       ├── boards/
-│   │   │   │       │   └── [boardId]/
-│   │   │   │       └── page.tsx
-│   │   │   └── profile/
-│   │   ├── api/                 # API routes
-│   │   │   ├── auth/
-│   │   │   ├── teams/
-│   │   │   ├── boards/
-│   │   │   ├── tasks/
-│   │   │   └── profile/
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components/              # React components
-│   │   ├── board/              # Board and task components
-│   │   ├── layout/             # Layout components
-│   │   └── providers/          # Context providers
-│   ├── lib/                     # Utility functions
-│   │   ├── prisma.ts           # Prisma client
-│   │   ├── auth.ts             # NextAuth config
-│   │   └── utils.ts            # Helper functions
-│   ├── types/                   # TypeScript types
-│   └── middleware.ts            # Route protection
-├── prisma/
-│   ├── schema.prisma           # Database schema
-│   └── seed.ts                 # Seed data script
-├── package.json
-├── tsconfig.json
-└── next.config.js
-```
+### 🔔 Notifications
+- Team invitation notifications
+- Real-time notification bell
+- Mark as read functionality
 
-## 🗄️ Database Schema
+## Tech Stack
 
-### Models
+- **Framework:** Next.js 16 (App Router)
+- **Language:** TypeScript
+- **Database:** PostgreSQL with Prisma ORM
+- **Authentication:** NextAuth.js
+- **UI:** Material-UI (MUI)
+- **Styling:** Emotion
 
-- **User**: User accounts with authentication
-- **Team**: Team/workspace entities
-- **TeamMember**: Junction table with roles (ADMIN/MEMBER)
-- **Board**: Task boards belonging to teams
-- **Task**: Individual tasks with status, assignee, due dates
-- **Account/Session**: NextAuth session management
-
-### Relationships
-
-- Users can belong to multiple teams
-- Teams have multiple boards
-- Boards contain multiple tasks
-- Tasks can be assigned to users
-
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+ 
 - PostgreSQL database
-- npm or yarn
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd team-task-hub
-   ```
-
-2. **Install dependencies**
+1. Clone the repository
+2. Install dependencies:
    ```bash
    npm install
    ```
-   
-   > **Note**: The project uses React 19. If you see any peer dependency warnings, they can be safely ignored. See [INSTALLATION_NOTES.md](INSTALLATION_NOTES.md) for details.
 
-3. **Set up environment variables**
-   
-   Create a `.env` file in the root directory:
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Configure your `.env` file:
    ```env
-   # Database
-   DATABASE_URL="postgresql://user:password@localhost:5432/team_task_hub?schema=public"
-   
-   # NextAuth
+   DATABASE_URL="postgresql://user:password@localhost:5432/team_task_hub"
    NEXTAUTH_URL="http://localhost:3000"
    NEXTAUTH_SECRET="your-secret-key-here"
-   
-   # Optional: Google OAuth
-   # GOOGLE_CLIENT_ID="your-google-client-id"
-   # GOOGLE_CLIENT_SECRET="your-google-client-secret"
    ```
 
-   Generate a secret key:
+5. Generate Prisma client and push schema:
    ```bash
-   openssl rand -base64 32
+   npx prisma generate
+   npx prisma db push
    ```
 
-4. **Set up the database**
+6. (Optional) Seed the database:
    ```bash
-   # Push schema to database
-   npm run db:push
-   
-   # Seed with demo data
    npm run db:seed
    ```
 
-5. **Run the development server**
+7. Run the development server:
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
-   
-   Navigate to [http://localhost:3000](http://localhost:3000)
+8. Open [http://localhost:3000](http://localhost:3000)
 
-### Demo Accounts
+## Member Management Guide
 
-After seeding, you can sign in with:
+### For Team Admins
 
-- **Alice** (Dev Team Admin): `alice@example.com` / `password123`
-- **Bob** (Marketing Team Admin): `bob@example.com` / `password123`
-- **Charlie** (Team Member): `charlie@example.com` / `password123`
+#### Invite Members
+1. Go to team page
+2. Click "Members" tab
+3. Click "Invite Member" button
+4. Enter email address
+5. Select role (Admin or Member)
+6. Click "Send Invitation"
+7. User receives notification and must accept
 
-## 🎯 Usage Guide
+#### Change Member Role
+1. Go to "Members" tab
+2. Click ⋮ (three dots) next to member
+3. Click "Change Role"
+4. Select new role
+5. Click "Update Role"
 
-### Creating a Team
+#### Remove Member
+1. Go to "Members" tab
+2. Click ⋮ (three dots) next to member
+3. Click "Remove Member"
+4. Confirm removal
+5. Member loses access immediately
 
-1. Sign in to your account
-2. Click "Create Team" in the sidebar
-3. Enter team name and submit
-4. You'll be added as the team admin
+### Permissions
 
-### Inviting Members
+**Admin:**
+- Full team management access
+- Invite/remove members
+- Change member roles
+- Create/delete boards
+- All member permissions
 
-1. Navigate to your team dashboard
-2. Click "Invite Member" (admin only)
-3. Enter the email of an existing user
-4. They'll be added to your team
+**Member:**
+- View team boards
+- Create/edit/delete tasks
+- View team members
+- Cannot manage members or boards
 
-### Creating Boards
+### Safety Features
 
-1. Go to your team dashboard
-2. Click "Create Board" (admin only)
-3. Enter board name
-4. Start adding tasks!
+- ✅ Cannot remove the last admin
+- ✅ Cannot remove yourself (ask another admin)
+- ✅ Cannot demote last admin (promote someone first)
+- ✅ Confirmation dialogs for destructive actions
+- ✅ Clear error messages
 
-### Managing Tasks
-
-1. Open a board
-2. Click "+" in any column to create a task
-3. Fill in task details (title, description, assignee, due date)
-4. Click on tasks to edit or move them between columns
-5. Use the menu (⋮) for more options
-
-### Switching Themes
-
-Click the sun/moon icon in the app bar to toggle between light and dark modes.
-
-## 🔐 API Routes
-
-### Authentication
-- `POST /api/auth/signup` - Create new user
-- `POST /api/auth/signin` - Sign in (handled by NextAuth)
+## API Endpoints
 
 ### Teams
-- `GET /api/teams` - List user's teams
+- `GET /api/teams` - Get user's teams
 - `POST /api/teams` - Create team
 - `GET /api/teams/[teamId]` - Get team details
-- `POST /api/teams/[teamId]/invite` - Invite member (admin)
-- `GET /api/teams/[teamId]/boards` - List team boards
-- `POST /api/teams/[teamId]/boards` - Create board (admin)
+- `POST /api/teams/[teamId]/invite` - Invite member
+
+### Members (NEW)
+- `GET /api/teams/[teamId]/members` - List members
+- `PATCH /api/teams/[teamId]/members/[memberId]` - Update role
+- `DELETE /api/teams/[teamId]/members/[memberId]` - Remove member
 
 ### Boards
-- `GET /api/boards/[boardId]` - Get board with tasks
-- `PUT /api/boards/[boardId]` - Update board (admin)
-- `DELETE /api/boards/[boardId]` - Delete board (admin)
-- `POST /api/boards/[boardId]/tasks` - Create task
+- `GET /api/teams/[teamId]/boards` - List boards
+- `POST /api/teams/[teamId]/boards` - Create board
+- `GET /api/boards/[boardId]` - Get board details
+- `DELETE /api/boards/[boardId]` - Delete board
 
 ### Tasks
-- `PUT /api/tasks/[taskId]` - Update task
+- `POST /api/boards/[boardId]/tasks` - Create task
+- `PATCH /api/tasks/[taskId]` - Update task
 - `DELETE /api/tasks/[taskId]` - Delete task
 
-### Profile
-- `GET /api/profile` - Get user profile
-- `PUT /api/profile` - Update profile
+### Invitations
+- `GET /api/invitations` - Get user's invitations
+- `POST /api/invitations/[invitationId]` - Accept/reject
 
-## 🎨 Customization
+### Notifications
+- `GET /api/notifications` - Get notifications
+- `PATCH /api/notifications` - Mark as read
 
-### Theme
+## Project Structure
 
-Edit `src/components/providers/ThemeProvider.tsx` to customize colors and styles:
-
-```typescript
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2', // Change primary color
-    },
-    // ... more customization
-  },
-});
+```
+src/
+├── app/
+│   ├── (auth)/              # Authentication pages
+│   ├── (protected)/         # Protected pages
+│   │   ├── teams/
+│   │   │   ├── [teamId]/
+│   │   │   │   ├── boards/
+│   │   │   │   └── page.tsx # Team dashboard with tabs
+│   │   ├── invitations/
+│   │   └── profile/
+│   └── api/
+│       ├── teams/
+│       │   └── [teamId]/
+│       │       ├── members/  # NEW: Member CRUD
+│       │       ├── boards/
+│       │       └── invite/
+│       ├── boards/
+│       ├── tasks/
+│       ├── invitations/
+│       └── notifications/
+├── components/
+│   ├── team/
+│   │   └── MemberManagement.tsx  # NEW: Member CRUD UI
+│   ├── board/
+│   ├── invitations/
+│   ├── notifications/
+│   └── layout/
+├── lib/
+│   ├── auth.ts
+│   ├── prisma.ts
+│   └── utils.ts
+└── types/
+    └── index.ts
 ```
 
-### Task Statuses
+## Database Schema
 
-Modify `prisma/schema.prisma` to add custom statuses:
+### Key Models
 
-```prisma
-enum Status {
-  TODO
-  IN_PROGRESS
-  IN_REVIEW    // Add new status
-  DONE
-}
-```
+**User**
+- id, email, name, password, image
+- Relations: teamMembers, tasks, invitations
 
-Then update the UI in `src/components/board/BoardView.tsx`.
+**Team**
+- id, name, createdAt, updatedAt
+- Relations: members, boards, invitations
 
-## 🚀 Deployment
+**TeamMember**
+- id, userId, teamId, role, joinedAt
+- Unique: (userId, teamId)
 
-### Vercel (Recommended)
+**Board**
+- id, name, teamId, createdAt, updatedAt
+- Relations: team, tasks
 
-1. Push your code to GitHub
-2. Import project in Vercel
-3. Add environment variables
-4. Deploy!
+**Task**
+- id, title, description, status, position
+- boardId, assigneeId, createdById, dueDate
 
-### Environment Variables for Production
+**TeamInvitation**
+- id, teamId, invitedBy, invitedUser, role, status
+- Status: PENDING, ACCEPTED, REJECTED, EXPIRED
 
-```env
-DATABASE_URL="your-production-database-url"
-NEXTAUTH_URL="https://your-domain.com"
-NEXTAUTH_SECRET="your-production-secret"
-```
+**Notification**
+- id, userId, type, title, message, read, data
 
-## 🧪 Development Scripts
+## Development
+
+### Available Scripts
 
 ```bash
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
-npm run db:push      # Push schema to database
-npm run db:seed      # Seed database with demo data
+npx prisma studio    # Open Prisma Studio
+npx prisma generate  # Generate Prisma Client
+npx prisma db push   # Push schema to database
 ```
 
-## 📝 Key Features Explained
+### Code Style
 
-### Role-Based Access Control
+- TypeScript for type safety
+- ESLint for code quality
+- Functional components with hooks
+- Material-UI for consistent design
+- Server components where possible
 
-- **Admin**: Can create/delete boards, invite members, manage team
-- **Member**: Can view boards, create/edit tasks
+## Security
 
-Implemented in API routes with helper functions in `src/lib/utils.ts`.
+- Passwords hashed with bcrypt
+- JWT-based sessions
+- CSRF protection
+- Role-based access control
+- Input validation with Zod
+- SQL injection protection (Prisma)
 
-### Protected Routes
+## Contributing
 
-Middleware (`src/middleware.ts`) protects routes under `/teams` and `/profile`, redirecting unauthenticated users to sign-in.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-### Theme Persistence
+## License
 
-Theme preference is saved to localStorage and persists across sessions.
+MIT
 
-### Type Safety
+## Support
 
-Full TypeScript coverage with Prisma-generated types and custom type definitions.
-
-## 🔧 Troubleshooting
-
-### Database Connection Issues
-
-- Verify PostgreSQL is running
-- Check DATABASE_URL format
-- Ensure database exists
-
-### Authentication Not Working
-
-- Verify NEXTAUTH_SECRET is set
-- Check NEXTAUTH_URL matches your domain
-- Clear browser cookies and try again
-
-### Build Errors
-
-- Delete `.next` folder and rebuild
-- Clear node_modules and reinstall
-- Check for TypeScript errors
-
-## 🤝 Contributing
-
-This is a demo project. Feel free to fork and customize for your needs!
-
-## 📄 License
-
-MIT License - feel free to use this project for learning or production.
-
-## 🙏 Acknowledgments
-
-- Built with Next.js, Material-UI, and Prisma
-- Inspired by modern project management tools
-- Created as a full-stack demo application
+For issues or questions, please open an issue on GitHub.
 
 ---
 
-**Happy Task Managing! 🎉**
+**Built with ❤️ using Next.js and Material-UI**

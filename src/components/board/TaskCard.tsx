@@ -1,6 +1,6 @@
 /**
- * Task Card Component
- * Displays individual task with details
+ * Task Card Component - Minimal Design
+ * Simple, clean task card with minimal styling
  */
 
 'use client';
@@ -21,6 +21,9 @@ import {
   MoreVert,
   CalendarToday,
   Person,
+  Edit,
+  Delete,
+  ArrowForward,
 } from '@mui/icons-material';
 import { TaskWithDetails, TeamMemberWithUser } from '@/types';
 import { formatDate, getInitials, stringToColor } from '@/lib/utils';
@@ -97,15 +100,29 @@ export default function TaskCard({ task, teamMembers, onUpdate }: TaskCardProps)
         sx={{
           mb: 2,
           cursor: 'pointer',
+          boxShadow: 1,
+          overflow: 'visible',
+          transition: 'box-shadow 0.2s, border-color 0.2s',
+          border: '1px solid',
+          borderColor: 'divider',
           '&:hover': {
-            boxShadow: 3,
+            boxShadow: 2,
+            borderColor: 'primary.main',
           },
         }}
         onClick={handleEdit}
       >
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1 }}>
+        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+          {/* Header */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                fontWeight: 500,
+                flexGrow: 1,
+                pr: 1,
+              }}
+            >
               {task.title}
             </Typography>
             <IconButton
@@ -119,12 +136,13 @@ export default function TaskCard({ task, teamMembers, onUpdate }: TaskCardProps)
             </IconButton>
           </Box>
 
+          {/* Description */}
           {task.description && (
             <Typography
               variant="body2"
               color="text.secondary"
               sx={{
-                mb: 2,
+                mb: 1.5,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 display: '-webkit-box',
@@ -136,33 +154,47 @@ export default function TaskCard({ task, teamMembers, onUpdate }: TaskCardProps)
             </Typography>
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Footer */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            gap: 1,
+          }}>
+            {/* Assignee */}
             {task.assignee ? (
-              <Avatar
-                sx={{
-                  width: 28,
-                  height: 28,
-                  bgcolor: avatarColor,
-                  fontSize: '0.75rem',
-                }}
-                src={task.assignee.image || undefined}
-              >
-                {assigneeInitials}
-              </Avatar>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    bgcolor: avatarColor,
+                    fontSize: '0.75rem',
+                  }}
+                  src={task.assignee.image || undefined}
+                >
+                  {assigneeInitials}
+                </Avatar>
+                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                  {task.assignee.name || task.assignee.email}
+                </Typography>
+              </Box>
             ) : (
               <Chip
-                icon={<Person />}
+                icon={<Person sx={{ fontSize: 16 }} />}
                 label="Unassigned"
                 size="small"
                 variant="outlined"
               />
             )}
 
+            {/* Due Date */}
             {task.dueDate && (
               <Chip
-                icon={<CalendarToday />}
+                icon={<CalendarToday sx={{ fontSize: 14 }} />}
                 label={formatDate(task.dueDate)}
                 size="small"
+                color={new Date(task.dueDate) < new Date() ? 'error' : 'default'}
                 variant="outlined"
               />
             )}
@@ -170,20 +202,35 @@ export default function TaskCard({ task, teamMembers, onUpdate }: TaskCardProps)
         </CardContent>
       </Card>
 
+      {/* Context Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        <MenuItem onClick={handleEdit}>Edit</MenuItem>
-        <MenuItem onClick={() => handleMoveStatus('TODO')}>Move to To Do</MenuItem>
-        <MenuItem onClick={() => handleMoveStatus('IN_PROGRESS')}>Move to In Progress</MenuItem>
-        <MenuItem onClick={() => handleMoveStatus('DONE')}>Move to Done</MenuItem>
-        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleEdit} sx={{ gap: 1 }}>
+          <Edit fontSize="small" />
+          Edit
+        </MenuItem>
+        <MenuItem onClick={() => handleMoveStatus('TODO')} sx={{ gap: 1 }}>
+          <ArrowForward fontSize="small" />
+          To Do
+        </MenuItem>
+        <MenuItem onClick={() => handleMoveStatus('IN_PROGRESS')} sx={{ gap: 1 }}>
+          <ArrowForward fontSize="small" />
+          In Progress
+        </MenuItem>
+        <MenuItem onClick={() => handleMoveStatus('DONE')} sx={{ gap: 1 }}>
+          <ArrowForward fontSize="small" />
+          Done
+        </MenuItem>
+        <MenuItem onClick={handleDelete} sx={{ gap: 1, color: 'error.main' }}>
+          <Delete fontSize="small" />
           Delete
         </MenuItem>
       </Menu>
 
+      {/* Edit Dialog */}
       <TaskDialog
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
